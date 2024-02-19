@@ -4,6 +4,7 @@ import { nextTick, ref } from 'vue';
 import PaperAirPlane from './icons/PaperAirPlane.vue';
 import { Message } from '../types';
 import ThinkingLoader from './ThinkingLoader.vue';
+import Xmark from './icons/Xmark.vue';
 const API_URL = 'http://localhost:5500/chat';
 
 const scrollElement = ref<HTMLElement | null>(null);
@@ -111,11 +112,16 @@ async function send(event: Event) {
     <div v-if="isOpen"
       class="absolute w-[350px] h-[550px] overflow-hidden bg-white bottom-[120%] right-[50%] rounded-lg shadow-lg">
       <!-- Box Header -->
-      <div class="h-[85px] bg-red-50 p-3">
-        <div class="w-10 h-10 bg-teal-50 rounded-full flex justify-center items-center mx-auto">
+      <div class="h-[85px] bg-red-50 p-3 relative">
+        <div class="w-10 h-10 bg-teal-50 rounded-full text-2xl flex justify-center items-center mx-auto">
           🙂
         </div>
         <p class="text-center text-sm text-teal-900 mt-1">Chatbot</p>
+
+        <!-- Close -->
+        <button @click="isOpen = false">
+          <Xmark class="absolute top-3 right-3 h-4 w-4" />
+        </button>
       </div>
 
       <!-- Box messages -->
