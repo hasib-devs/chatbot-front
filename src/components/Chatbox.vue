@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import ChatBubbleLeftRight from './icons/ChatBubbleLeftRight.vue';
-import { nextTick, ref } from 'vue';
+import { nextTick, onUnmounted, ref } from 'vue';
 import PaperAirPlane from './icons/PaperAirPlane.vue';
 import { Message } from '../types';
 import ThinkingLoader from './ThinkingLoader.vue';
 import Xmark from './icons/Xmark.vue';
+import MarkdownRenderer from './MarkdownRenderer.vue';
 const API_URL = 'http://localhost:5500/chat';
 
+
 const scrollElement = ref<HTMLElement | null>(null);
+const lockScrollBottom = ref(true);
 
 const isOpen = ref(true);
 const isThinking = ref(false);
@@ -28,9 +31,15 @@ async function stopChat() {
   signal = controller.signal;
 }
 
+onUnmounted(() => {
+  stopChat();
+});
+
+// 
 function scrollToBottom() {
   nextTick(() => {
-    if (scrollElement.value) {
+    console.log({ lockScrollBottom: lockScrollBottom.value });
+    if (lockScrollBottom.value && scrollElement.value) {
       scrollElement.value.scrollTop = scrollElement.value.scrollHeight;
     }
   });
@@ -41,7 +50,7 @@ async function streamToString(body: any) {
   const reader = body?.pipeThrough(new TextDecoderStream()).getReader();
   isThinking.value = false;
   isTyping.value = true;
-  while (reader) {
+  while (reader && isTyping.value) {
     let stream = await reader.read();
     if (stream.done) break;
     const chunks = stream.value
@@ -87,6 +96,7 @@ async function chat(messages: Message[]) {
 async function send(event: Event) {
   stopChat();
   isThinking.value = true;
+  lockScrollBottom.value = true;
 
   const target = event.target as HTMLFormElement;
   const formData = new FormData(target);
@@ -98,6 +108,22 @@ async function send(event: Event) {
   scrollToBottom();
 
   await chat(messages.value);
+}
+
+let lastScrollTop = 0;
+function onScrollMessages() {
+  const currentScrollTop = window.scrollY || document.documentElement.scrollTop;
+
+  if (currentScrollTop > lastScrollTop) {
+    // Scrolling down
+    console.log('Scrolling down');
+  } else {
+    // Scrolling up
+    lockScrollBottom.value = false;
+  }
+
+  // Update the last scroll position
+  lastScrollTop = currentScrollTop <= 0 ? 0 : currentScrollTop;
 }
 </script>
 
@@ -114,7 +140,7 @@ async function send(event: Event) {
       <!-- Box Header -->
       <div class="h-[85px] bg-red-50 p-3 relative">
         <div class="w-10 h-10 bg-teal-50 rounded-full text-2xl flex justify-center items-center mx-auto">
-          🙂
+          😀
         </div>
         <p class="text-center text-sm text-teal-900 mt-1">Chatbot</p>
 
@@ -125,23 +151,23 @@ async function send(event: Event) {
       </div>
 
       <!-- Box messages -->
-      <div class="h-[390px] overflow-y-auto" ref="scrollElement">
+      <div class="h-[390px] overflow-y-auto overflow-x-hidden" ref="scrollElement" @scroll.prevent="onScrollMessages">
         <div v-for="msg in messages" class="text-sm">
           <!-- User text -->
           <div v-if="msg.role === 'user'" class="flex justify-end">
-            <div class="bg-slate-200 text-gray-800 px-3 py-2 rounded-md m-2">
-              {{ msg.content }}
+            <div class="bg-slate-200 text-gray-800 px-3 py-2 rounded-md m-2 mr-0 overflow-x-auto">
+              <MarkdownRenderer :source="msg.content" />
             </div>
           </div>
 
           <!-- Bot text -->
           <div v-else class="flex justify-start px-3 py-2">
             <p class="text-2xl" v-if="!msg.content.length && isThinking">🤔</p>
-            <p class="text-2xl" v-else>😎</p>
-            <div class="bg-teal-600 text-white w-full px-3 py-2 rounded-md m-2">
-              <p v-if="msg.content.length">
-                {{ msg.content }}
-              </p>
+            <p class="text-2xl" v-else>🤓</p>
+            <div class="bg-teal-600 text-white w-full px-3 py-2 rounded-md m-2 mr-0">
+              <div v-if="msg.content.length" class="overflow-x-auto max-w-[260px]">
+                <MarkdownRenderer :source="msg.content" />
+              </div>
               <div v-if="!msg.content.length && isThinking" class="px-4 py-1.5">
                 <ThinkingLoader />
               </div>
