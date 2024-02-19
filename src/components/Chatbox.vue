@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import ChatBubbleLeftRight from './icons/ChatBubbleLeftRight.vue';
-import { ref } from 'vue';
+import { nextTick, ref } from 'vue';
 import PaperAirPlane from './icons/PaperAirPlane.vue';
 import { Message } from '../types';
 import ThinkingLoader from './ThinkingLoader.vue';
 const API_URL = 'http://localhost:5500/chat';
+
+const scrollElement = ref<HTMLElement | null>(null);
 
 const isOpen = ref(true);
 const isThinking = ref(false);
@@ -23,6 +25,14 @@ async function stopChat() {
   controller.abort();
   controller = new AbortController();
   signal = controller.signal;
+}
+
+function scrollToBottom() {
+  nextTick(() => {
+    if (scrollElement.value) {
+      scrollElement.value.scrollTop = scrollElement.value.scrollHeight;
+    }
+  });
 }
 
 async function streamToString(body: any) {
@@ -45,6 +55,7 @@ async function streamToString(body: any) {
         messages.value[index].content += content;
       }
     }
+    scrollToBottom();
   }
   isTyping.value = false;
 }
@@ -54,21 +65,26 @@ async function chat(messages: Message[]) {
     messages: messages
   };
 
-  const response = await fetch(API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(body),
-    signal
-  });
+  try {
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(body),
+      signal
+    });
+    await streamToString(response.body);
+  } catch (error) {
+    // console.error(error);
+  }
 
-  await streamToString(response.body);
 
 
 }
 
 async function send(event: Event) {
+  stopChat();
   isThinking.value = true;
 
   const target = event.target as HTMLFormElement;
@@ -78,6 +94,8 @@ async function send(event: Event) {
 
   messages.value.push({ role: "user", content: message as string });
   messages.value.push({ role: "assistant", content: '' });
+  scrollToBottom();
+
   await chat(messages.value);
 }
 </script>
@@ -101,7 +119,7 @@ async function send(event: Event) {
       </div>
 
       <!-- Box messages -->
-      <div class="h-[390px] overflow-y-auto">
+      <div class="h-[390px] overflow-y-auto" ref="scrollElement">
         <div v-for="msg in messages" class="text-sm">
           <!-- User text -->
           <div v-if="msg.role === 'user'" class="flex justify-end">

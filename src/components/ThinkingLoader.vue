@@ -14,8 +14,8 @@
 .dot-typing {
     position: relative;
     left: -9999px;
-    width: 8px;
-    height: 8px;
+    width: 7px;
+    height: 7px;
     border-radius: 5px;
     background-color: #fff;
     color: #fff;
