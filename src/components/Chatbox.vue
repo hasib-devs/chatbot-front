@@ -147,79 +147,95 @@ function onScrollMessages() {
   <div class="fixed bottom-20 right-20">
     <div @click="isOpen = !isOpen"
       class="cursor-pointer w-20 h-20 rounded-full flex justify-center items-center shadow-lg  bg-teal-600 text-white">
-      <ChatBubbleLeftRight class="w-10 h-10" />
+      <div>
+        <ChatBubbleLeftRight v-if="!isOpen" class="w-10 h-10" />
+        <Xmark v-else class="w-[40px] h-[40px]" />
+      </div>
     </div>
 
     <!-- Box -->
-    <div v-if="isOpen"
-      class="absolute w-[350px] h-[550px] overflow-hidden bg-white bottom-[120%] right-[50%] rounded-lg shadow-lg">
-      <!-- Box Header -->
-      <div class="h-[85px] bg-red-50 p-3 relative">
-        <div class="w-10 h-10 bg-teal-50 rounded-full text-2xl flex justify-center items-center mx-auto">
-          😀
-        </div>
-        <p class="text-center text-sm text-teal-900 mt-1">Chatbot</p>
-
-        <!-- Close -->
-        <button @click="isOpen = false">
-          <Xmark class="absolute top-3 right-3 h-4 w-4" />
-        </button>
-      </div>
-
-      <!-- Box messages -->
-      <div class="h-[390px] overflow-y-auto overflow-x-hidden" ref="scrollElement"
-        @scroll.prevent.stop="onScrollMessages">
-        <div v-for="msg in messages" class="text-sm">
-          <!-- User text -->
-          <div v-if="msg.role === 'user'" class="flex justify-end">
-            <div class="bg-slate-200 text-gray-800 px-3 py-2 rounded-md m-2 mr-0 overflow-x-auto">
-              <MarkdownRenderer :source="msg.content" />
-            </div>
+    <Transition>
+      <div v-if="isOpen"
+        class="absolute w-[350px] h-[550px] overflow-hidden bg-white bottom-[120%] right-[50%] rounded-lg shadow-lg">
+        <!-- Box Header -->
+        <div class="h-[85px] bg-red-50 p-3 relative">
+          <div class="w-10 h-10 bg-teal-50 rounded-full text-2xl flex justify-center items-center mx-auto">
+            😀
           </div>
+          <p class="text-center text-sm text-teal-900 mt-1">Chatbot</p>
 
-          <!-- Bot text -->
-          <div v-else class="flex justify-start px-3 py-2">
-            <p class="text-2xl" v-if="!msg.content.length && isThinking">🤔</p>
-            <p class="text-2xl" v-else>🤓</p>
-            <div class="bg-teal-600 text-white w-full px-3 py-2 rounded-md m-2 mr-0">
-              <div v-if="msg.content.length" class="overflow-x-auto max-w-[260px]">
+          <!-- Close -->
+          <button @click="isOpen = false">
+            <Xmark class="absolute top-3 right-3 h-4 w-4" />
+          </button>
+        </div>
+
+        <!-- Box messages -->
+        <div class="h-[390px] overflow-y-auto overflow-x-hidden" ref="scrollElement"
+          @scroll.prevent.stop="onScrollMessages">
+          <div v-for="msg in messages" class="text-sm">
+            <!-- User text -->
+            <div v-if="msg.role === 'user'" class="flex justify-end">
+              <div class="bg-slate-200 text-gray-800 px-3 py-2 rounded-md m-2 mr-0 overflow-x-auto">
                 <MarkdownRenderer :source="msg.content" />
               </div>
-              <div v-if="!msg.content.length && isThinking" class="px-4 py-1.5">
-                <ThinkingLoader />
+            </div>
+
+            <!-- Bot text -->
+            <div v-else class="flex justify-start px-3 py-2">
+              <p class="text-2xl" v-if="!msg.content.length && isThinking">🤔</p>
+              <p class="text-2xl" v-else>🤓</p>
+              <div class="bg-teal-600 text-white w-full px-3 py-2 rounded-md m-2 mr-0">
+                <div v-if="msg.content.length" class="overflow-x-auto max-w-[260px]">
+                  <MarkdownRenderer :source="msg.content" />
+                </div>
+                <div v-if="!msg.content.length && isThinking" class="px-4 py-1.5">
+                  <ThinkingLoader />
+                </div>
               </div>
             </div>
           </div>
+
+          <div class="mt-2 flex justify-center">
+            <button @click="stopChat" v-if="isTyping"
+              class="bg-gray-600 text-xs text-white px-3 py-1.5 rounded-md">Stop</button>
+          </div>
         </div>
 
-        <div class="mt-2 flex justify-center">
-          <button @click="stopChat" v-if="isTyping"
-            class="bg-gray-600 text-xs text-white px-3 py-1.5 rounded-md">Stop</button>
+        <!-- Box footer -->
+        <div class="absolute bottom-0 w-full border-t px-3 py-3">
+          <form @submit.prevent="send" class="flex items-end">
+            <input autofocus autocomplete="off" autocorrect="off" name="message" auto type="text"
+              class="w-full px-3 py-1.5 focus:ring-0 focus:outline-0 placeholder:text-sm flex-1 resize-none " rows="1"
+              placeholder="Compose your message..." />
+            <button type="submit" class="bg-teal-600 text-white px-3 py-1.5 rounded-md">
+              <PaperAirPlane />
+            </button>
+          </form>
+        </div>
+
+        <!-- Floting Down arrow -->
+        <div v-if="!lockScrollBottom" @click.prevent="forceScrollToBottom"
+          class="absolute bottom-16 left-1/2 -translate-x-1/2 cursor-pointer bg-slate-200 w-5 h-5 rounded-full flex justify-center items-center">
+          <ArrowDown class="w-[13px] h-[13px] text-gray-700" />
         </div>
       </div>
-
-      <!-- Box footer -->
-      <div class="absolute bottom-0 w-full border-t px-3 py-3">
-        <form @submit.prevent="send" class="flex items-end">
-          <input autofocus autocomplete="off" autocorrect="off" name="message" auto type="text"
-            class="w-full px-3 py-1.5 focus:ring-0 focus:outline-0 placeholder:text-sm flex-1 resize-none " rows="1"
-            placeholder="Compose your message..." />
-          <button type="submit" class="bg-teal-600 text-white px-3 py-1.5 rounded-md">
-            <PaperAirPlane />
-          </button>
-        </form>
-      </div>
-
-      <!-- Floting Down arrow -->
-      <div v-if="!lockScrollBottom" @click.prevent="forceScrollToBottom"
-        class="absolute bottom-16 left-1/2 -translate-x-1/2 cursor-pointer bg-slate-200 w-5 h-5 rounded-full flex justify-center items-center">
-        <ArrowDown class="w-[13px] h-[13px] text-gray-700" />
-      </div>
-    </div>
+    </Transition>
 
 
   </div>
 </template>
 
 
-<style scoped></style>
+<style scoped>
+/* we will explain what these classes do next! */
+.v-enter-active,
+.v-leave-active {
+  transition: opacity 0.5s ease;
+}
+
+.v-enter-from,
+.v-leave-to {
+  opacity: 0;
+}
+</style>
