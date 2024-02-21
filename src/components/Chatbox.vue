@@ -155,7 +155,7 @@ function onScrollMessages() {
     <!-- Box -->
     <Transition>
       <div v-if="isOpen"
-        class="absolute w-[350px] h-[550px] overflow-hidden bg-white bottom-[120%] right-[50%] rounded-lg shadow-lg">
+        class="absolute w-[380px] h-[550px] overflow-hidden bg-white bottom-[120%] right-[50%] rounded-lg shadow-lg">
         <!-- Box Header -->
         <div class="h-[85px] bg-red-50 p-3 relative">
           <div class="w-10 h-10 bg-teal-50 rounded-full text-2xl flex justify-center items-center mx-auto">
@@ -175,16 +175,16 @@ function onScrollMessages() {
           <div v-for="msg in messages" class="text-sm">
             <!-- User text -->
             <div v-if="msg.role === 'user'" class="flex justify-end">
-              <div class="bg-slate-200 text-gray-800 px-3 py-2 rounded-md m-2 mr-0 overflow-x-auto">
+              <div class="bg-slate-200 text-gray-800 px-3 py-2 rounded-md m-2 overflow-x-auto">
                 <MarkdownRenderer :source="msg.content" />
               </div>
             </div>
 
             <!-- Bot text -->
-            <div v-else class="flex justify-start px-3 py-2">
+            <div v-else class="flex justify-start px-3 py-2 pr-0">
               <p class="text-2xl" v-if="!msg.content.length && isThinking">🤔</p>
               <p class="text-2xl" v-else>🤓</p>
-              <div class="bg-teal-600 text-white w-full px-3 py-2 rounded-md m-2 mr-0">
+              <div class="bg-teal-600 text-white w-full px-3 py-2 rounded-md m-2">
                 <div v-if="msg.content.length" class="overflow-x-auto max-w-[260px]">
                   <MarkdownRenderer :source="msg.content" />
                 </div>
