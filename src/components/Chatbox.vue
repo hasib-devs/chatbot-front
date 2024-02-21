@@ -6,6 +6,8 @@ import { Message } from '../types';
 import ThinkingLoader from './ThinkingLoader.vue';
 import Xmark from './icons/Xmark.vue';
 import MarkdownRenderer from './MarkdownRenderer.vue';
+import ArrowDown from './icons/ArrowDown.vue';
+
 const API_URL = 'http://localhost:5500/chat';
 
 
@@ -40,9 +42,18 @@ function scrollToBottom() {
   nextTick(() => {
     console.log({ lockScrollBottom: lockScrollBottom.value });
     if (lockScrollBottom.value && scrollElement.value) {
-      scrollElement.value.scrollTop = scrollElement.value.scrollHeight;
+      scrollElement.value.scrollTo({
+        top: scrollElement.value.scrollHeight,
+        behavior: "smooth"
+      });
+
     }
   });
+}
+function forceScrollToBottom() {
+  lockScrollBottom.value = true;
+  scrollToBottom();
+
 }
 
 async function streamToString(body: any) {
@@ -112,11 +123,16 @@ async function send(event: Event) {
 
 let lastScrollTop = 0;
 function onScrollMessages() {
-  const currentScrollTop = window.scrollY || document.documentElement.scrollTop;
+  const currentScrollTop = scrollElement.value?.scrollTop || 0;
 
   if (currentScrollTop > lastScrollTop) {
     // Scrolling down
-    console.log('Scrolling down');
+    // Check if the user is at the bottom of the chat
+    const isAtBottom = scrollElement.value?.scrollHeight! - currentScrollTop === scrollElement.value?.clientHeight;
+    if (isAtBottom) {
+      lockScrollBottom.value = true;
+    }
+
   } else {
     // Scrolling up
     lockScrollBottom.value = false;
@@ -151,7 +167,8 @@ function onScrollMessages() {
       </div>
 
       <!-- Box messages -->
-      <div class="h-[390px] overflow-y-auto overflow-x-hidden" ref="scrollElement" @scroll.prevent="onScrollMessages">
+      <div class="h-[390px] overflow-y-auto overflow-x-hidden" ref="scrollElement"
+        @scroll.prevent.stop="onScrollMessages">
         <div v-for="msg in messages" class="text-sm">
           <!-- User text -->
           <div v-if="msg.role === 'user'" class="flex justify-end">
@@ -192,7 +209,15 @@ function onScrollMessages() {
           </button>
         </form>
       </div>
+
+      <!-- Floting Down arrow -->
+      <div v-if="!lockScrollBottom" @click.prevent="forceScrollToBottom"
+        class="absolute bottom-16 left-1/2 -translate-x-1/2 cursor-pointer bg-slate-200 w-5 h-5 rounded-full flex justify-center items-center">
+        <ArrowDown class="w-[13px] h-[13px] text-gray-700" />
+      </div>
     </div>
+
+
   </div>
 </template>
 
