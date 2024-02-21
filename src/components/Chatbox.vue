@@ -18,7 +18,7 @@ const isOpen = ref(true);
 const isThinking = ref(false);
 const isTyping = ref(false);
 const messages = ref<Message[]>([
-  { role: "assistant", content: "Hello, I'm a chatbot. How can I help you?" }
+  { role: "assistant", content: "Hello, How can I help you?" }
 ]);
 
 let controller = new AbortController();
@@ -40,7 +40,6 @@ onUnmounted(() => {
 // 
 function scrollToBottom() {
   nextTick(() => {
-    console.log({ lockScrollBottom: lockScrollBottom.value });
     if (lockScrollBottom.value && scrollElement.value) {
       scrollElement.value.scrollTo({
         top: scrollElement.value.scrollHeight,
